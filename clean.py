@@ -159,6 +159,11 @@ def main(dryrun, apikey, user, userkey, showid, path_param):
                 print(f"Skipping {p} because it's not a file.")
                 continue
             new_p = p.parents[0] / f"{new_name}{p.suffix}"
+            try:
+                assert not new_p.is_file()
+            except:
+                print(f"Skipping {p} because {new_p} already exists.")
+                continue
             if not dryrun:
                 p.rename(new_p)
             else:
