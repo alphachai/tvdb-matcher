@@ -8,6 +8,7 @@ import click
 import requests
 
 TVDB_URL = "https://api.thetvdb.com"
+MATCH_MIN = 0.5
 
 
 def check(resp):
@@ -29,7 +30,9 @@ def clean_name(n):
     return n
 
 
-def find_matches(name, show):
+def find_matches(name, show, verbose=False):
+    if verbose:
+        print(f"FIND_MATCHES\t{name}")
     matches = []
     ep_split = name.split(" ")
     ep_split_count = len(ep_split)
@@ -47,29 +50,30 @@ def find_matches(name, show):
             ]:
                 if s in _split:
                     match_total += 1
-                    # print(f"{s} in {_split} for {name}")
                     _split.remove(s)
             if match_total > 0:
-                matches.append(
-                    (
-                        season_id,
-                        episode_id,
-                        match_total / len(episode_data.get("_split")),
-                        name,
-                    )
+                _match = (
+                    season_id,
+                    episode_id,
+                    match_total / len(episode_data.get("_split")),
+                    name,
                 )
+                if verbose and _match[2] >= MATCH_MIN:
+                    print(f"FOUND\t{_match}")
+                matches.append(_match)
 
     return sorted(matches, key=lambda x: x[2], reverse=True)
 
 
 @click.command()
+@click.option("--verbose", default=False, type=click.BOOL)
 @click.option("--dryrun", default=False, type=click.BOOL)
 @click.option("--apikey")
 @click.option("--user")
 @click.option("--userkey")
 @click.option("--showid")
 @click.argument("path_param")
-def main(dryrun, apikey, user, userkey, showid, path_param):
+def main(verbose, dryrun, apikey, user, userkey, showid, path_param):
     payload = {"apikey": apikey, "username": user, "userkey": userkey}
     resp = check(requests.post(f"{TVDB_URL}/login", json=payload))
     token = resp.get("token")
@@ -128,7 +132,7 @@ def main(dryrun, apikey, user, userkey, showid, path_param):
 
     # Match episodes on disk to episodes in TVDB
     for _, episode in episodes.items():
-        episode["matches"] = find_matches(episode["name"], episode_data[showid])
+        episode["matches"] = find_matches(episode["name"], episode_data[showid], verbose)
 
     matches = []
     for _, episode in episodes.items():
@@ -140,20 +144,37 @@ def main(dryrun, apikey, user, userkey, showid, path_param):
         pct = match[2] * 100
 
         best_matches = [match]
+        best_match = match
         for m in episode["matches"][1:]:
-            if m[2] >= pct:
+            if m[2] * 100 >= pct:
                 best_matches.append(m)
 
+                # Best match criteria:
+                # - One match had more terms than the rest.
+                if best_match and len(m[3]) == len(best_match[3]):
+                    best_match = None
+                elif best_match and len(m[3]) > len(best_match[3]):
+                    best_match = m
+
         if len(best_matches) > 1:
-            print(f'Found multiple matches for "{name}"...')
-            for mi in range(len(best_matches)):
-                print(f"({mi})\t{best_matches[mi]}")
-            try:
-                chosen_match = int(input("Select best match: "))
-                assert chosen_match in range(len(best_matches))
-            except Exception as e:
-                print(f"Unacceptable match selected. {e}")
-            match = episode["matches"][mi]
+            if best_match and best_match[2] == 1:
+                # If we found a best match earlier and the match pct == 100%...
+                match = best_match
+            else:
+                # Ask the user the pick the best match.
+                print(f'Found multiple matches for "{name}"...')
+                for mi in range(len(best_matches)):
+                    print(f"({mi})\t{best_matches[mi]}")
+                try:
+                    chosen_match = input("Select best match (# or blank to skip): ")
+                    if not chosen_match:
+                        print("Skipping.")
+                        continue
+                    chosen_match = int(chosen_match)
+                    assert chosen_match in range(len(best_matches))
+                except Exception as e:
+                    print(f"Unacceptable match selected. {e}")
+                match = episode["matches"][mi]
 
         matches.append((episode, match))
 
@@ -167,7 +188,7 @@ def main(dryrun, apikey, user, userkey, showid, path_param):
         print(
             f'MATCH [{pct:.0f}%] "{name}" --> S{season_id} E{episode_id} "{match_name}"'
         )
-        if pct <= 50:
+        if pct <= MATCH_MIN*100:
             print("Skipping, match pct <= 50%")
             continue
         new_name = f"S{season_id}E{episode_id} {match_name}"
@@ -181,7 +202,8 @@ def main(dryrun, apikey, user, userkey, showid, path_param):
             try:
                 assert not new_p.is_file()
             except:
-                print(f"Skipping {p} because {new_p} already exists.")
+                if verbose:
+                    print(f"Skipping {p} because {new_p} already exists.")
                 continue
             if not dryrun:
                 p.rename(new_p)
