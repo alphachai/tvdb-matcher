@@ -9,7 +9,7 @@ This matcher relies completely on word matching. All symbols are ignored.
 
 ### Command
 ```bash
-python clean.py --dryrun=False --apikey=TVDB_API_KEY --user=TVDB_USERNAME --userkey=TVDB_USER_KEY --showid=TVDB_SHOW_ID /path/to/your/media
+python clean.py --apikey=TVDB_API_KEY --user=TVDB_USERNAME --userkey=TVDB_USER_KEY --showid=TVDB_SHOW_ID /path/to/your/media
 ```
 
 ### Output
