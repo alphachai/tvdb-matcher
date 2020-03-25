@@ -132,7 +132,9 @@ def main(verbose, dryrun, apikey, user, userkey, showid, path_param):
 
     # Match episodes on disk to episodes in TVDB
     for _, episode in episodes.items():
-        episode["matches"] = find_matches(episode["name"], episode_data[showid], verbose)
+        episode["matches"] = find_matches(
+            episode["name"], episode_data[showid], verbose
+        )
 
     matches = []
     for _, episode in episodes.items():
@@ -188,7 +190,7 @@ def main(verbose, dryrun, apikey, user, userkey, showid, path_param):
         print(
             f'MATCH [{pct:.0f}%] "{name}" --> S{season_id} E{episode_id} "{match_name}"'
         )
-        if pct <= MATCH_MIN*100:
+        if pct <= MATCH_MIN * 100:
             print("Skipping, match pct <= 50%")
             continue
         new_name = f"S{season_id}E{episode_id} {match_name}"
