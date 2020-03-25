@@ -27,7 +27,7 @@ def clean_name(n):
     )
     while "  " in n:
         n = n.replace("  ", " ")
-    return n
+    return n.strip()
 
 
 def find_matches(name, show, verbose=False):
@@ -38,9 +38,9 @@ def find_matches(name, show, verbose=False):
     ep_split_count = len(ep_split)
     for season_id, season_data in show.items():
         for episode_id, episode_data in season_data.items():
-            name = episode_data["episodeName"]
+            _name = episode_data["episodeName"]
             _split = copy.deepcopy(
-                episode_data.setdefault("_split", clean_name(name).split(" "))
+                episode_data.setdefault("_split", clean_name(" ".join(_name.split("."))).split(" "))
             )
             match_total = 0
             for s in ep_split + [
@@ -56,7 +56,7 @@ def find_matches(name, show, verbose=False):
                     season_id,
                     episode_id,
                     match_total / len(episode_data.get("_split")),
-                    name,
+                    _name,
                 )
                 if verbose and _match[2] >= MATCH_MIN:
                     print(f"FOUND\t{_match}")
