@@ -40,7 +40,9 @@ def find_matches(name, show, verbose=False):
         for episode_id, episode_data in season_data.items():
             _name = episode_data["episodeName"]
             _split = copy.deepcopy(
-                episode_data.setdefault("_split", clean_name(" ".join(_name.split("."))).split(" "))
+                episode_data.setdefault(
+                    "_split", clean_name(" ".join(_name.split("."))).split(" ")
+                )
             )
             match_total = 0
             for s in ep_split + [
