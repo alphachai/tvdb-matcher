@@ -116,7 +116,7 @@ def main(verbose, dryrun, apikey, user, userkey, showid, path_param):
     # Discover episodes on disk at user-specified path.
     show_files = []
     for p in show_path.iterdir():
-        if p.is_file():
+        if p.is_file() and p.suffix:
             show_files.append(p)
 
     episodes = {}
