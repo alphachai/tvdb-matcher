@@ -1,3 +1,4 @@
+import copy
 import json
 import re
 from collections import defaultdict
@@ -31,21 +32,26 @@ def find_matches(name, show):
     for season_id, season_data in show.items():
         for episode_id, episode_data in season_data.items():
             name = episode_data["episodeName"]
-            _split = episode_data.get("_split", None)
-            if not _split:
-                _split = clean_name(name).split(" ")
-                episode_data["_split"] = _split
-
-            match_count = 0
+            _split = episode_data.setdefault("_split", clean_name(name).split(" "))
+            _split = copy.deepcopy(_split)
+            match_total = 0
             for s in ep_split + [
                 f"S{season_id}",
                 f"E{episode_id}",
                 f"S{season_id}E{episode_id}",
             ]:
                 if s in _split:
-                    match_count += 1
-            if match_count > 0:
-                matches.append((season_id, episode_id, match_count / len(_split), name))
+                    match_total += 1
+                    _split.remove(s)
+            if match_total > 0:
+                matches.append(
+                    (
+                        season_id,
+                        episode_id,
+                        match_total / len(episode_data.get("_split")),
+                        name,
+                    )
+                )
 
     return sorted(matches, key=lambda x: x[2], reverse=True)
 
@@ -105,7 +111,7 @@ def main(dryrun, apikey, user, userkey, showid, path_param):
 
     episodes = {}
     for sf in show_files:
-        file_name_no_ext = ".".join(sf.name.split(".")[:-1])
+        file_name_no_ext = " ".join(sf.name.split(".")[:-1])
         episode_name = clean_name(file_name_no_ext)
         if episode_name not in episodes:
             episodes[episode_name] = {
@@ -121,6 +127,9 @@ def main(dryrun, apikey, user, userkey, showid, path_param):
     matches = []
     for _, episode in episodes.items():
         name = episode["name"]
+        if not episode["matches"]:
+            print(f"No matches founds for episode {name}.")
+            continue
         match = episode["matches"][0]
         pct = match[2] * 100
 
@@ -150,7 +159,7 @@ def main(dryrun, apikey, user, userkey, showid, path_param):
         pct = match[2] * 100
         match_name = match[3]
         print(
-            f'Matched {name} with S{season_id}E{episode_id} "{match_name}" with {pct:.0f}% certainty.'
+            f'Matched "{name}" with S{season_id}E{episode_id} "{match_name}" with {pct:.0f}% certainty.'
         )
 
         new_name = f"S{season_id}E{episode_id} {match_name}"
