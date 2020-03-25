@@ -18,7 +18,10 @@ def check(resp):
 
 
 def clean_name(n):
-    return re.sub(r"\W+", "", n.replace(" ", "_")).replace("_", " ").lower()
+    n = re.sub(r"\W+", "", n.replace(" ", "_")).replace("_", " ").lower()
+    while "  " in n:
+        n = n.replace("  ", " ")
+    return n
 
 
 def find_matches(name, show):
