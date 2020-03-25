@@ -76,14 +76,9 @@ def find_matches(name, show, verbose=False):
 @click.option("--showid")
 @click.argument("path_param")
 def main(verbose, dryrun, apikey, user, userkey, showid, path_param):
-    payload = {"apikey": apikey, "username": user, "userkey": userkey}
-    resp = check(requests.post(f"{TVDB_URL}/login", json=payload))
-    token = resp.get("token")
-    headers = {"Authorization": f"Bearer {token}"}
-
     show_path = Path(path_param)
-    cache_path = Path("cache.json")
-
+    cache_path = Path(".cache.json")
+    token_path = Path(".token")
     show_data = {}
     episode_data = {}
 
@@ -94,8 +89,20 @@ def main(verbose, dryrun, apikey, user, userkey, showid, path_param):
             episode_data = _data["episodes"]
             show_data = _data["shows"]
     else:
-        url = f"{TVDB_URL}/series/{showid}"
+        # Get TVDB token
+        if token_path.is_file():
+            with open(str(token_path.absolute()), "r") as f:
+                token = str((f.readline()).strip())
+        else:
+            payload = {"apikey": apikey, "username": user, "userkey": userkey}
+            resp = check(requests.post(f"{TVDB_URL}/login", json=payload))
+            token = resp.get("token")
+            with open(str(token_path.absolute()), "a") as f:
+                f.write(f"{token}\n")
 
+        headers = {"Authorization": f"Bearer {token}"}
+
+        url = f"{TVDB_URL}/series/{showid}"
         _episodes = []
         page = 0
         url = f"{TVDB_URL}/series/{showid}/episodes"

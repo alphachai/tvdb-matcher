@@ -129,4 +129,5 @@ dmypy.json
 .pyre/
 
 *build-harness
-cache.json
+.cache.json
+.token
