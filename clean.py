@@ -19,7 +19,11 @@ def check(resp):
 
 
 def clean_name(n):
-    n = re.sub(r"\W+", "", n.replace(" ", "_").replace("-", "_")).replace("_", " ").lower()
+    n = (
+        re.sub(r"\W+", "", n.replace(" ", "_").replace("-", "_"))
+        .replace("_", " ")
+        .lower()
+    )
     while "  " in n:
         n = n.replace("  ", " ")
     return n
@@ -32,7 +36,9 @@ def find_matches(name, show):
     for season_id, season_data in show.items():
         for episode_id, episode_data in season_data.items():
             name = episode_data["episodeName"]
-            _split = copy.deepcopy(episode_data.setdefault("_split", clean_name(name).split(" ")))
+            _split = copy.deepcopy(
+                episode_data.setdefault("_split", clean_name(name).split(" "))
+            )
             match_total = 0
             for s in ep_split + [
                 f"S{season_id}",
