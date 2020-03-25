@@ -19,7 +19,7 @@ def check(resp):
 
 
 def clean_name(n):
-    n = re.sub(r"\W+", "", n.replace(" ", "_")).replace("_", " ").lower()
+    n = re.sub(r"\W+", "", n.replace(" ", "_").replace("-", "_")).replace("_", " ").lower()
     while "  " in n:
         n = n.replace("  ", " ")
     return n
@@ -32,8 +32,7 @@ def find_matches(name, show):
     for season_id, season_data in show.items():
         for episode_id, episode_data in season_data.items():
             name = episode_data["episodeName"]
-            _split = episode_data.setdefault("_split", clean_name(name).split(" "))
-            _split = copy.deepcopy(_split)
+            _split = copy.deepcopy(episode_data.setdefault("_split", clean_name(name).split(" ")))
             match_total = 0
             for s in ep_split + [
                 f"S{season_id}",
@@ -42,6 +41,7 @@ def find_matches(name, show):
             ]:
                 if s in _split:
                     match_total += 1
+                    # print(f"{s} in {_split} for {name}")
                     _split.remove(s)
             if match_total > 0:
                 matches.append(
@@ -159,9 +159,11 @@ def main(dryrun, apikey, user, userkey, showid, path_param):
         pct = match[2] * 100
         match_name = match[3]
         print(
-            f'Matched "{name}" with S{season_id}E{episode_id} "{match_name}" with {pct:.0f}% certainty.'
+            f'MATCH [{pct:.0f}%] "{name}" --> S{season_id} E{episode_id} "{match_name}"'
         )
-
+        if pct <= 50:
+            print("Skipping, match pct <= 50%")
+            continue
         new_name = f"S{season_id}E{episode_id} {match_name}"
         for p in episode["files"]:
             try:
