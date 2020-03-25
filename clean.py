@@ -117,7 +117,9 @@ def main(verbose, dryrun, apikey, user, userkey, showid, path_param):
 
     if verbose:
         for season_id, season_data in episode_data[showid].items():
-            print(f"Season: {season_id} Episodes: {sorted(list(season_data.keys()))}")
+            print(
+                f"Season: {season_id} Episodes: {sorted(list(season_data.keys()), key=lambda x: int(x))}"
+            )
 
     # Discover episodes on disk at user-specified path.
     show_files = []
