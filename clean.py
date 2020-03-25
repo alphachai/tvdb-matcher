@@ -61,8 +61,7 @@ def main(dryrun, apikey, user, userkey, showid, path_param):
     headers = {"Authorization": f"Bearer {token}"}
 
     show_path = Path(path_param)
-    script_path = Path()
-    cache_path = script_path / "cache.json"
+    cache_path = Path("cache.json")
 
     show_data = {}
     episode_data = {}
