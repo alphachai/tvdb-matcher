@@ -115,6 +115,10 @@ def main(verbose, dryrun, apikey, user, userkey, showid, path_param):
         with open(str(cache_path.absolute()), "a") as f:
             f.write(json.dumps({"shows": show_data, "episodes": episode_data}) + "\n")
 
+    if verbose:
+        for season_id, season_data in episode_data[showid].items():
+            print(f"Season: {season_id} Episodes: {sorted(list(season_data.keys()))}")
+
     # Discover episodes on disk at user-specified path.
     show_files = []
     for p in show_path.iterdir():
@@ -122,7 +126,11 @@ def main(verbose, dryrun, apikey, user, userkey, showid, path_param):
             show_files.append(p)
 
     episodes = {}
+    if verbose:
+        print("Finding files...")
     for sf in show_files:
+        if verbose:
+            print(sf)
         file_name_no_ext = " ".join(sf.name.split(".")[:-1])
         episode_name = clean_name(file_name_no_ext)
         if episode_name not in episodes:
