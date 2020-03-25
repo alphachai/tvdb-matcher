@@ -2,6 +2,8 @@
 
 I threw this together to clean up my TV media. Nothing special here, but it might save you time too.
 
+This matcher relies completely on word matching. All symbols are ignored.
+
 
 ## Example
 
@@ -10,7 +12,7 @@ I threw this together to clean up my TV media. Nothing special here, but it migh
 python clean.py --dryrun=False --apikey=TVDB_API_KEY --user=TVDB_USERNAME --userkey=TVDB_USER_KEY --showid=TVDB_SHOW_ID /path/to/your/media
 ```
 
-### output
+### Output
 ```
 Matched 1809 Red Riding Hoodwinked with S1955E26 "Red Riding Hoodwinked" with 100% certainty.
 Matched 2306 You Dont Know What Youre Doin with S1931E13 "You Don't Know What You're Doin'!" with 100% certainty.
