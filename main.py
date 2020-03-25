@@ -6,7 +6,6 @@ from pathlib import Path
 import click
 import requests
 
-
 TVDB_URL = "https://api.thetvdb.com"
 
 
@@ -19,7 +18,7 @@ def check(resp):
 
 
 def clean_name(n):
-    return re.sub(r'\W+', '', n.replace(" ", "_")).replace("_", " ")
+    return re.sub(r"\W+", "", n.replace(" ", "_")).replace("_", " ")
 
 
 def find_matches(name, show):
@@ -35,7 +34,11 @@ def find_matches(name, show):
                 episode_data["_split"] = _split
 
             match_count = 0
-            for s in ep_split + [f"S{season_id}", f"E{episode_id}", f"S{season_id}E{episode_id}"]:
+            for s in ep_split + [
+                f"S{season_id}",
+                f"E{episode_id}",
+                f"S{season_id}E{episode_id}",
+            ]:
                 if s in _split:
                     match_count += 1
             if match_count > 0:
@@ -45,14 +48,14 @@ def find_matches(name, show):
 
 
 @click.command()
-@click.option('--dryrun', default=False, type=click.BOOL)
-@click.option('--apikey')
-@click.option('--user')
-@click.option('--userkey')
-@click.option('--showid')
-@click.argument('path_param')
+@click.option("--dryrun", default=False, type=click.BOOL)
+@click.option("--apikey")
+@click.option("--user")
+@click.option("--userkey")
+@click.option("--showid")
+@click.argument("path_param")
 def main(dryrun, apikey, user, userkey, showid, path_param):
-    payload = {"apikey":apikey, "username":user, "userkey":userkey}
+    payload = {"apikey": apikey, "username": user, "userkey": userkey}
     resp = check(requests.post(f"{TVDB_URL}/login", json=payload))
     token = resp.get("token")
     headers = {"Authorization": f"Bearer {token}"}
@@ -66,15 +69,10 @@ def main(dryrun, apikey, user, userkey, showid, path_param):
 
     # Load show episodes from TVDB API, cache them forever in cache.json
     if cache_path.is_file():
-        with open(str(cache_path.absolute()), 'r') as f:
+        with open(str(cache_path.absolute()), "r") as f:
             _data = json.loads("".join([line for line in f]))
             episode_data = _data["episodes"]
             show_data = _data["shows"]
-            # for show_name, show_data in _data["episodes"].items():
-            #     for season_id, season_data in show_data.items():
-            #         for episode_id, episode_data in season_data.items():
-            #             name = episode_data["episodeName"]
-
     else:
         url = f"{TVDB_URL}/series/{showid}"
 
@@ -83,7 +81,7 @@ def main(dryrun, apikey, user, userkey, showid, path_param):
         url = f"{TVDB_URL}/series/{showid}/episodes"
         resp = check(requests.get(url, params={"page": page}, headers=headers))
         _episodes.extend(resp["data"])
-        for i in range(2, resp["links"]["last"]+1):
+        for i in range(2, resp["links"]["last"] + 1):
             resp = check(requests.get(url, params={"page": i}, headers=headers))
             _episodes.extend(resp["data"])
 
@@ -94,7 +92,7 @@ def main(dryrun, apikey, user, userkey, showid, path_param):
             name = e["episodeName"]
             episode_data[showid][season][episode] = e
 
-        with open(str(cache_path.absolute()), 'a') as f:
+        with open(str(cache_path.absolute()), "a") as f:
             f.write(json.dumps({"shows": show_data, "episodes": episode_data}) + "\n")
 
     # Discover episodes on disk at user-specified path.
@@ -130,7 +128,7 @@ def main(dryrun, apikey, user, userkey, showid, path_param):
                 best_matches.append(m)
 
         if len(best_matches) > 1:
-            print(f"Found multiple matches for \"{name}\"...")
+            print(f'Found multiple matches for "{name}"...')
             for mi in range(len(best_matches)):
                 print(f"({mi})\t{best_matches[mi]}")
             try:
@@ -149,7 +147,9 @@ def main(dryrun, apikey, user, userkey, showid, path_param):
         episode_id = match[1]
         pct = match[2] * 100
         match_name = match[3]
-        print(f"Matched {name} with S{season_id}E{episode_id} \"{match_name}\" with {pct:.0f}% certainty.")
+        print(
+            f'Matched {name} with S{season_id}E{episode_id} "{match_name}" with {pct:.0f}% certainty.'
+        )
 
         new_name = f"S{season_id}E{episode_id} {match_name}"
         for p in episode["files"]:
@@ -165,5 +165,5 @@ def main(dryrun, apikey, user, userkey, showid, path_param):
                 print(f"Would rename {p} to {new_p}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
